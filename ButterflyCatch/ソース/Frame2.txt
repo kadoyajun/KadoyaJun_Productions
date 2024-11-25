@@ -1,0 +1,132 @@
+this.stop();
+
+var time :Number = 0;
+var timer :Timer = new Timer(1000,0);
+timer.start();
+
+var NetRadius:Number  = 50;
+var NetActive:Boolean = true;
+var NetFalseTime:Number  = 30;
+
+var Butterfly :Array = [Butterfly1_mc,Butterfly2_mc,Butterfly3_mc,Butterfly4_mc,Butterfly5_mc];
+var ButterflyActive:Array = [true,true,true,true,true];
+var ButterflyRadius :Number = 30;
+var Angle: Array = [0,0,0,0,0];
+var Distance:Array = [0,0,0,0,0];
+
+var MoveTimer:Array = [0,0,0,0,0];
+var MoveAngle: Array = [0,0,0,0,0];
+var MoveSpeed :Number = 5;
+var EscapeSpeed :Number = 10;
+
+var CatchCount :Number = 0;
+
+
+
+timer.addEventListener(TimerEvent.TIMER,timeCounter);
+
+function timeCounter(evt: TimerEvent): void{
+	time++;
+	time_txt.text = String(time);
+}
+
+Go_mc.addEventListener(Event.ENTER_FRAME,gameStart);
+
+function gameStart(evt: Event):void{
+	Go_mc.y -= 10;
+	Net_mc.startDrag(true);
+}
+
+Net_mc.addEventListener(MouseEvent.MOUSE_DOWN,netCatch);
+
+//キャッチ
+function netCatch(evt: MouseEvent):void{
+	Net_mc.play();
+	if(NetActive == true){
+		for(var i = 0; i < Butterfly.length; i++){
+			if(Distance[i] <= 0 && ButterflyActive[i] == true){
+				Butterfly[i].x = -100;
+				ButterflyActive[i] = false;
+				CatchCount++;
+			}
+		}
+	}
+	NetActive = false;
+}
+
+//蝶の動きのコントロール
+stage.addEventListener(Event.ENTER_FRAME,butterflyControl);
+
+function butterflyControl(evt:Event) :void{
+	for(var i = 0; i < Butterfly.length; i++){
+		if(ButterflyActive[i]){
+			//角度と距離の計算
+			Angle[i] = Math.atan2(-Net_mc.y - -Butterfly[i].y,Net_mc.x - Butterfly[i].x) * (180 / Math.PI);
+			var a = (Butterfly[i].x - Net_mc.x);
+			var b = (Butterfly[i].y - Net_mc.y);
+			Distance[i] = Math.sqrt(a * a + b * b) - ButterflyRadius - NetRadius;
+			
+			//移動角度と時間を設定し移動
+			if(Distance[i] < 100){
+				btfMove(Butterfly[i],-Angle[i],EscapeSpeed);
+				MoveTimer[i] = 0;
+			}
+			else{
+				if(MoveTimer[i] > 0){
+					btfMove(Butterfly[i],MoveAngle[i],MoveSpeed);
+					MoveTimer[i] -= 1;
+				}else{
+					MoveAngle[i] = Math.floor(Math.random() * 1000 % 360);
+					MoveTimer[i] = Math.floor(Math.random() * 1000 % 50);
+				}
+			}
+			
+			//端まで行ったら反対側に移動させる
+			if(Butterfly[i].x < 0){
+				Butterfly[i].x = 800;
+			}else if(Butterfly[i].x > 800){
+				Butterfly[i].x = 0;
+			}
+			if(Butterfly[i].y < 0){
+				Butterfly[i].y = 600;
+			}else if(Butterfly[i].y > 600){
+				Butterfly[i].y = 0;
+			}
+		}
+		else{
+			Butterfly[i].x = -100;
+		}
+	}
+}
+
+//移動
+function btfMove(obj,d,speed){
+	var i = Math.cos(Math.PI / 180 * d);
+	var j = Math.sin(Math.PI / 180 * d);
+	obj.x += i * speed;
+	obj.y -= j * speed;
+}
+
+stage.addEventListener(Event.ENTER_FRAME,gameControl);
+
+function gameControl(evt:Event):void{
+	//ネットのアクティブ制御
+	if(NetActive == false){
+		NetFalseTime--;
+	}
+	if(NetFalseTime <= 0){
+		NetActive = true;
+		NetFalseTime = 30;
+	}
+	//ゲームクリア判定
+	if(CatchCount >= Butterfly.length){
+		timer.stop();
+		timer.removeEventListener(TimerEvent.TIMER,timeCounter);
+		Go_mc.removeEventListener(Event.ENTER_FRAME,gameStart);
+		Net_mc.removeEventListener(MouseEvent.MOUSE_DOWN,netCatch);
+		stage.removeEventListener(Event.ENTER_FRAME,butterflyControl);
+		stage.removeEventListener(Event.ENTER_FRAME,gameControl);
+		nextFrame();
+	}
+}
+

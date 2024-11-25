@@ -1,0 +1,10 @@
+import flash.events.MouseEvent;
+
+this.stop();
+time_txt.text = String(time);
+
+Object(root).TitleBackButton_btn.addEventListener(MouseEvent.CLICK,backTitle);
+
+function backTitle(evt: MouseEvent):void{
+	gotoAndStop(1);
+}

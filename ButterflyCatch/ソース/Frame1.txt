@@ -1,0 +1,8 @@
+this.stop();
+
+Object(root).CatchButton_btn.addEventListener(MouseEvent.CLICK,go2Frame);
+
+function go2Frame(evt:MouseEvent):void{
+	nextFrame();
+}
+
